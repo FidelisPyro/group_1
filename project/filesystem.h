@@ -1,16 +1,61 @@
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
+#include "iNode.h"
+#include "diskmanager.h"
+#include "partitionmanager.h"
+#include <vector>
+#include <string>
+
+
+using namespace std;
+
 class FileSystem {
+private:
   DiskManager *myDM;
   PartitionManager *myPM;
   char myfileSystemName;
   int myfileSystemSize;
   
+  // Node for the files
+  struct FileNode 
+  {
+    string name;
+    int iNodeNumber;
+
+    FileNode(const string& name, int iNodeNumber)
+      : name(name), iNodeNumber(iNodeNumber){}
+  };
+
+  // Node for the directories
+  class Directory 
+  {
+    public:
+      string name;
+      int iNodeNumber;
+      Directory* parent;
+      vector<Directory*> children;
+      vector<FileNode> entries;
+
+      Directory() : name(""), iNodeNumber(), parent(nullptr){}
+
+      Directory(const string name, int iNodeNumber, Directory* parent)
+        : name(name), iNodeNumber(iNodeNumber), parent(parent){}
+
+      void addEntry(const string& name, int iNodeNumber) 
+      {
+        entries.push_back({name, iNodeNumber});
+      }
+  };
+
+  // Root directory of the tree structure
+  Directory rootDirectory;
+
   /* declare other private members here */
 
   public:
-    FileSystem(DiskManager *dm, char fileSystemName);
+    FileSystem(DiskManager *dm, char fileSystemName)
+      : rootDirectory("/r", 0, nullptr){}
     int createFile(char *filename, int fnameLen);
     int createDirectory(char *dirname, int dnameLen);
     int lockFile(char *filename, int fnameLen);
